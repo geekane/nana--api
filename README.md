@@ -2,8 +2,6 @@
 - 改成了api请求
 去掉了由此带来的失去用处的历史记录功能
 
-## 安装说明
-
 ### 环境准备
 
 - Node.js: v22.12.0
@@ -20,7 +18,6 @@
 - TTS服务使用了Fish Audio的API，需要注册账号并获取API Key
 - https://fish.audio/zh-CN/
 - 如果不想使用TTS，可以把FISH_API_KEY设置为空字符串
-
 
 ### 前端安装
 ```bash
@@ -57,9 +54,3 @@ cd backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 后端API将在 http://localhost:8000 启动
-
-
-### 其他说明
-- 对话历史保存至backend/save/下，想备份的话可以保存整个文件夹
-- live2d模型是我在工坊买的，仅供学习交流使用，请勿用于商业用途！！！
-- 如果在运行过程中遇到什么问题，欢迎来我的主页留意 https://space.bilibili.com/3546572358945017
