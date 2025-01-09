@@ -3,6 +3,7 @@ import asyncio
 from typing import List, Dict
 import json
 import re
+from config import Config  # 导入 Config 类
 
 class LLMService:
     def __init__(self, api_key: str, api_url: str):
@@ -23,29 +24,47 @@ class LLMService:
                 async with httpx.AsyncClient(verify=False, timeout=120.0) as client:
                     headers = {
                         "Authorization": f"Bearer {self.api_key}",
-                        "Connection": "keep-alive",
                         "Content-Type": "application/json"
+                    }
+                    
+                    data = {
+                        "model": Config.LLM_MODEL,  # 使用配置中的模型名称
+                        "messages": [
+                            {
+                                "role": "user", 
+                                "content": [
+                                    {
+                                        "type":"text",
+                                        "text": message
+                                    }
+                                ]
+                            }
+                        ],
+                        "temperature": temperature,
+                        "max_tokens": 4096,
+                        "top_p": 0.7,
+                        "top_k": 50,
+                        "frequency_penalty": 0.5,
+                        "n": 1,
+                        "response_format": {
+                            "type": "text"
+                        }
                     }
                     
                     response = await client.post(
                         self.api_url,
-                        json={
-                            "model": "claude-3-5-sonnet-20240620",
-                            "messages": [
-                                {
-                                    "role": "user", 
-                                    "content": message
-                                }
-                            ],
-                            "temperature": temperature,
-                        },
-                        headers={"Authorization": f"Bearer {self.api_key}"}
+                        json=data,
+                        headers=headers
                     )
                     
                     if response.status_code != 200:
-                        raise Exception(f"LLM API error: {response.status_code}")
+                        raise Exception(f"LLM API error: {response.status_code}, response text: {response.text}")
                     
-                    raw_response = response.json()["choices"][0]["message"]["content"].strip()
+                    response_data = response.json()
+                    if not response_data or "choices" not in response_data or not response_data["choices"]:
+                       raise Exception(f"Invalid API response format: {response_data}")
+                    
+                    raw_response = response_data["choices"][0]["message"]["content"].strip()
                     print("raw_response:", raw_response)
                     if is_json:
                         return self._parse_json_response(raw_response)

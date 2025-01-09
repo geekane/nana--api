@@ -11,7 +11,7 @@ class ChatService:
         self.llm_service = LLMService(Config.LLM_API_KEY, Config.LLM_API_URL)
         
         # 只在启用TTS时初始化TTS服务
-        self.tts_service = TTSService(Config.FISH_API_KEY, Config.FISH_REFERENCE_ID) if Config.is_tts_enabled() else None
+        self.tts_service = TTSService(Config.AUDIO_API_KEY, Config.AUDIO_API_URL, Config.EDGE_TTS_VOICE) if Config.is_tts_enabled() else None
          
         # 初始化对话历史和主Agent
         self.conversation_history = ConversationHistory(max_turns=Config.MAX_TURNS)

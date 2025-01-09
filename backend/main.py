@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = "default"
 
 chat_service = ChatService()
-tts_service = TTSService(Config.FISH_API_KEY, Config.FISH_REFERENCE_ID)
+tts_service = TTSService(Config.AUDIO_API_KEY, Config.AUDIO_API_URL, Config.EDGE_TTS_VOICE)
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
@@ -48,3 +48,7 @@ async def normal_chat_flow(request: ChatRequest):
             "expression": expression
         }
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

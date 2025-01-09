@@ -32,13 +32,9 @@ class MainAgent:
         """生成回复"""
         # 记录用户消息
         self._log_conversation('user', message)
-        
-        # 获取相关记忆
-        memory_text = self._get_relevant_memories(message)
-        print("相关记忆:", memory_text)
-        
+                
         # 生成回复
-        reply_content, expression = await self._generate_reply(message, memory_text)
+        reply_content, expression = await self._generate_reply(message)
         
         # 处理回复
         if reply_content:
@@ -53,7 +49,7 @@ class MainAgent:
         prompt = self.prompt_template.format(
             chat_history=context,
             user_message=message,
-            memory=memory_text,
+            memory="无补充信息",
             user_info=self.user_info
         )
         
@@ -68,11 +64,6 @@ class MainAgent:
             self.user_info = reply["user_info"]
         
         return reply.get("reply", ""), reply.get("expression", "")
-
-    def _get_relevant_memories(self, message: str) -> str:
-        """获取相关记忆"""
-        memories = self.conversation_history.retrieve(message, n_results=2)
-        return "\n".join(memories) if memories else "无补充信息"
 
     def _handle_successful_reply(self, message: str, reply_content: str) -> None:
         """处理成功的回复"""

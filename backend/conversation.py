@@ -1,35 +1,7 @@
 from typing import List
-import chromadb
-from chromadb.config import Settings
-from chromadb.api.types import EmbeddingFunction
 from datetime import datetime
 import uuid
-from embedding import EmbeddingService
 from config import Config
-
-class APIEmbeddingFunction(EmbeddingFunction):
-    def __init__(self):
-        self.embedding_service = EmbeddingService(
-            api_key=Config.EMBEDDING_API_KEY,
-            api_url=Config.EMBEDDING_API_URL,
-            model=Config.EMBEDDING_MODEL,
-            dimension=Config.EMBEDDING_DIMENSION
-        )
-        
-    def __call__(self, texts: List[str]) -> List[List[float]]:
-        embeddings = []
-        for text in texts:
-            try:
-                embedding = self.embedding_service.get_embedding(text)
-                if embedding is None:
-                    embedding = [0.0] * Config.EMBEDDING_DIMENSION
-                embeddings.append(embedding)
-            except Exception as e:
-                print(f"获取embedding时出错喵: {e}")
-                embedding = [0.0] * Config.EMBEDDING_DIMENSION
-                embeddings.append(embedding)
-        return embeddings
-
 
 class ConversationTurn:
     def __init__(self, ask: str, answer: str):
@@ -44,18 +16,6 @@ class ConversationHistory:
     def __init__(self, max_turns: int = 20):
         self.turns = []
         self.max_turns = max_turns
-
-        # 初始化向量数据库客户端
-        self.client = chromadb.Client(Settings(
-            persist_directory="save/memory",
-            is_persistent=True
-        ))
-        
-        # 获取或创建集合
-        self.collection = self.client.get_or_create_collection(
-            name="memory",
-            embedding_function=APIEmbeddingFunction()
-        )
         
     def add_dialog(self, user_message: str, assistant_message: str):
         """添加新对话，并在需要时触发自动归档"""
@@ -74,23 +34,6 @@ class ConversationHistory:
         # 计算要归档的对话数量
         archive_count = len(self.turns) // 2
         
-        # 准备归档内容
-        archive_turns = self.turns[:archive_count]
-        content = "\n".join(str(turn) for turn in archive_turns)
-        
-        print("以下内容将被归档：")
-        print(content)
-        print("--------------------------------")
-        
-        # 保存到向量数据库
-        self.collection.add(
-            documents=[content],
-            metadatas=[{
-                "timestamp": datetime.now().isoformat()
-            }],
-            ids=[str(uuid.uuid4())]
-        )
-        
         # 移除已归档的对话
         self.turns = self.turns[archive_count:]
         
@@ -98,16 +41,6 @@ class ConversationHistory:
         """获取格式化后的对话上下文"""
         return "\n".join(str(turn) for turn in self.turns)
         
-    def retrieve(self, user_message: str, n_results: int = 3) -> List[str]:
-        """获取与用户消息最相关的历史记忆"""
-        results = self.collection.query(
-            query_texts=[user_message],
-            n_results=n_results,
-            include=['documents']
-        )
-        
-        return results['documents'][0] if results['documents'] else []
-
 
 if __name__ == "__main__":
     async def main():
@@ -119,10 +52,10 @@ if __name__ == "__main__":
         #await conversation_history.archive(1, 1, "电影推荐")
         #await conversation_history.archive(0, 0, "广州有什么好吃的")
         
-        memories = conversation_history.retrieve("广州美食", n_results=1)
-        print("--------------------------------")
-        print(memories)
+        #memories = conversation_history.retrieve("广州美食", n_results=1)
+        #print("--------------------------------")
+        #print(memories)
 
     # 运行异步主函数
+    import asyncio
     asyncio.run(main())
-
